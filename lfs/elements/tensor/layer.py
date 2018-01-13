@@ -18,16 +18,11 @@ class Layer(tensor.Tensor):
         self._outputs = None
         self._deltas = None
 
-    def _rev_dot(self, other):
-        product = other._tensor.dot(self)
-
-        # Create output values according to the product of the table and
-        # the activation functions
-        for r in product:
-            pass
+    def dot(self, other):
+        product = tensor.Tensor(other._tensor.transpose().dot(self))
         vec_func = numpy.vectorize(self._act_func)
         self._outputs = vec_func(product)
-        return product
+        return tensor.Tensor(self._outputs)
 
     @property
     def matrix(self):
@@ -40,6 +35,10 @@ class Layer(tensor.Tensor):
     @property
     def deltas(self):
         return self._deltas
+
+    @deltas.setter
+    def deltas(self, value):
+        self._deltas = value
 
     def __str__(self):
         return (

@@ -26,13 +26,7 @@ class Tensor(object):
         self._tensor[key] = value
 
     def dot(self, other):
-        from . import layer
-        if isinstance(other, layer.Layer):
-            tensor = other._rev_dot(self)
-        else:
-            tensor = self._tensor.dot(other)
-
-        return Tensor(tensor)
+        return other.dot(self)
 
     @property
     def tensor(self):

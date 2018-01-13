@@ -1,11 +1,11 @@
 
-from elements.tensor import layer, features
+from elements.tensor import layer, features, tensor
 from elements import neural_network
 from elements.activation_functions import unipolar_sigmoid
 
 
 class Learner(object):
-    def __init__(self, dimensions, activation_function):
+    def __init__(self, dimensions, labels, activation_function):
         """
         Create a learner
 
@@ -20,9 +20,11 @@ class Learner(object):
                         ->  h_3,3
 
         :param activation_function: the activation function of each neuron
+        :param labels: number of labels
         """
         self._dimensions = dimensions
         self._act_function = activation_function
+        self._labels = {l: i for i, l in enumerate(labels)}
         self._layers = self._create_layers()
         self._neural_network = neural_network.NeuralNetwork(self._layers)
 
@@ -30,14 +32,21 @@ class Learner(object):
         for row in features_matrix:
             self.process(row, labels)
 
-    def process(self, features, labels=None):
+    def _translate_label(self, label):
+        vector_label = [0] * self._dimensions[-1]
+        vector_label[self._labels[label]] = 1
+        return vector_label
+
+    def process(self, features, label):
         """
 
         :param features: the features to flow through the neural network.
-        :param labels: passing labels means we are in training mode.
+        :param label: passing labels means we are in training mode.
         :return:
         """
-        return self._neural_network.process(features)
+        output_vector = self._neural_network.process(features)
+        self._neural_network.propagate_deltas(self._translate_label(label))
+        return output_vector
 
     def _create_layers(self):
         return [
@@ -54,15 +63,15 @@ class Learner(object):
 
 
 if __name__ == '__main__':
-    l = Learner((2, 3, 5, 2, 3), unipolar_sigmoid)
-    f = features.Features([1, 2])
-
-    res = l.process(f)
-
-    print l
-    print
+    l = Learner((2, 4, 2), ['dog', 'cat'], unipolar_sigmoid)
+    f = features.Features([2, 3])
     print f
     print
 
+    res = l.process(f, 'dog')
+
+    print l
+
+    print
 
     print res
