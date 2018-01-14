@@ -68,12 +68,12 @@ if __name__ == '__main__':
     f = features.Features([2, 3])
     print f
     print
-
-    res = l.process(f, 'dog')
-
     print l
 
     print
+
+    res = l.process(f, 'dog')
+
 
     print res
 
