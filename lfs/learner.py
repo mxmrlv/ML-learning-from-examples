@@ -46,6 +46,7 @@ class Learner(object):
         """
         output_vector = self._neural_network.process(features)
         self._neural_network.propagate_deltas(self._translate_label(label))
+        self._neural_network.update_layers()
         return output_vector
 
     def _create_layers(self):
@@ -75,3 +76,6 @@ if __name__ == '__main__':
     print
 
     print res
+
+    print '~' *20
+    print l
