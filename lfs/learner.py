@@ -35,7 +35,7 @@ class Learner(object):
     def _translate_label(self, label):
         vector_label = [0] * self._dimensions[-1]
         vector_label[self._labels[label]] = 1
-        return vector_label
+        return tensor.Tensor(vector_label)
 
     def process(self, features, label):
         """
@@ -64,7 +64,7 @@ class Learner(object):
 
 
 if __name__ == '__main__':
-    l = Learner((2, 4, 2), ['dog', 'cat'], unipolar_sigmoid)
+    l = Learner((2, 4, 10, 2, 25, 3, 2), ['dog', 'cat'], unipolar_sigmoid)
     f = features.Features([2, 3])
     print f
     print

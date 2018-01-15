@@ -1,6 +1,8 @@
 
 import numpy
 
+import threading
+
 class NeuralNetwork(object):
 
     def __init__(self, layers):
@@ -13,22 +15,33 @@ class NeuralNetwork(object):
                       features_vector)
 
     def propagate_deltas(self, label):
-        top_deltas = self._layers[-1].calculate_deltas(label=label)
+        top_layer = self._layers[-1].calculate_deltas(label=label)
 
         return reduce(
-            lambda upper_deltas, layer: layer.calculate_deltas(
-                upper_deltas=upper_deltas
+            lambda top_layer, layer: layer.calculate_deltas(
+                top_layer=top_layer,
             ),
-            reversed(self._layers[:-1]),
-            top_deltas
+            reversed(self._layers),
+            top_layer
         )
 
     def update_layers(self):
-        for layer in self._layers:
+        def _tensor_calculator(layer):
             layer._tensor = \
-                numpy.array([v - (self._step * layer.deltas.tensor * layer.outputs.tensor) for v in layer._tensor])
+                numpy.array(
+                    [v - (self._step * layer.deltas.tensor * layer.outputs.tensor)
+                     for v in layer._tensor]
+                )
 
+        threads = [
+            threading.Thread(target=_tensor_calculator,
+                             kwargs=(dict(layer=layer)))
+            for layer in self._layers
+        ]
 
+        for thread in threads:
+            thread.start()
+            thread.join()
 
     def __str__(self):
         return '\n\n'.join(str(l) for l in self._layers)

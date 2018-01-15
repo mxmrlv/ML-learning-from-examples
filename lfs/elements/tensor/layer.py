@@ -20,38 +20,32 @@ class Layer(tensor.Tensor):
         self._lambda = 1
 
     def dot(self, other):
-        product = tensor.Tensor(other._tensor.transpose().dot(self))
+        product = self.tensor.transpose().dot(other.tensor)
         vec_func = numpy.vectorize(self._act_func)
         self._outputs = tensor.Tensor(vec_func(product))
-        return tensor.Tensor(self._outputs)
+        return self.outputs
 
-    def calculate_deltas(self, label=None, upper_deltas=None):
+    def calculate_deltas(self, label=None, top_layer=None):
         if label:
             deltas = (
                     -self._lambda *
-                    (label - self.outputs.tensor) *
+                    (label.tensor - self.outputs.tensor) *
                     self.outputs.tensor *
                     (1 - self.outputs.tensor)
             )
         else:
-            assert upper_deltas is not None
+            assert top_layer is not None
             deltas = [
                 self._lambda *
                 self.outputs[i] *
                 (1 - self.outputs[i]) *
-                self.transpose()[i].dot(upper_deltas)
+                top_layer.tensor[i].dot(top_layer.deltas.tensor)
 
                 for i in xrange(len(self.outputs.tensor))
             ]
 
         self._deltas = tensor.Tensor(numpy.array(deltas))
-        return self.deltas
-
-
-
-    @property
-    def matrix(self):
-        return self._tensor
+        return self
 
     @property
     def outputs(self):

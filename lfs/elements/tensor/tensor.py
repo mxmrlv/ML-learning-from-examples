@@ -10,12 +10,6 @@ class Tensor(object):
     def __init__(self, tensor, *args, **kwargs):
         self._tensor = tensor
 
-    def __getattr__(self, item):
-        try:
-            return getattr(self._tensor, item)
-        except AttributeError:
-            return super(Tensor, self).__getattribute__(item)
-
     def __str__(self):
         return str(self._tensor)
 
