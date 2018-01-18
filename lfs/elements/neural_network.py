@@ -1,47 +1,51 @@
-
 import numpy
 
-import threading
+from . import layer, matrix
+
 
 class NeuralNetwork(object):
+    def __init__(self, dimensions, step):
+        self._layers = self._create_layers(dimensions)
+        self._step = step
 
-    def __init__(self, layers):
-        self._layers = layers
-        self._step = 0.003
-
-    def process(self, features_vector):
-        return reduce(lambda l1, l2: l1.dot(l2),
-                      self._layers,
-                      features_vector)
-
-    def propagate_deltas(self, label):
-        top_layer = self._layers[-1].calculate_deltas(label=label)
-
+    def process(self, features_vector, learning=True):
         return reduce(
-            lambda top_layer, layer: layer.calculate_deltas(
-                top_layer=top_layer,
-            ),
-            reversed(self._layers),
-            top_layer
+            lambda l1, l2: l2.dot(l1, learning),
+            self._layers,
+            features_vector
         )
 
-    def update_layers(self):
-        def _tensor_calculator(layer):
-            layer._tensor = \
-                numpy.array(
-                    [v - (self._step * layer.deltas.tensor * layer.outputs.tensor)
-                     for v in layer._tensor]
-                )
+    def update_layers(self, label, features_vector):
+        self._propagate_deltas(label)
+        self._update_layers(features_vector)
 
-        threads = [
-            threading.Thread(target=_tensor_calculator,
-                             kwargs=(dict(layer=layer)))
-            for layer in self._layers
+    def _propagate_deltas(self, label):
+        # calculate the top layer deltas
+        self._layers[-1].update_deltas(label=label)
+
+        # calculate the rest of the layers deltas
+        if len(self._layers) > 1:
+            reduce(lambda n, c: c.update_deltas(next_layer=n),
+                   reversed(self._layers))
+
+    def _update_layers(self, features_vector):
+
+        def _update(o1, l2):
+            l2.matrix -= self._step * numpy.outer(l2.deltas.vector, o1.vector).transpose()
+
+        return reduce(_update, self._layers, features_vector)
+
+    @staticmethod
+    def _create_layers(dimensions):
+        return [
+            layer.Layer(*dimensions[d:d+2])
+            for d in xrange(len(dimensions[:-1]))
         ]
 
-        for thread in threads:
-            thread.start()
-            thread.join()
-
     def __str__(self):
-        return '\n\n'.join(str(l) for l in self._layers)
+        return ('\n\n'.join(str(l) for l in self._layers) +
+                '(step={self._step})'.format(self=self))
+
+    @staticmethod
+    def vectorize(ndarray):
+        return matrix.Vector(ndarray)

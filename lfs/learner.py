@@ -1,81 +1,111 @@
+from contextlib import contextmanager
 
-from elements.tensor import layer, features, tensor
+import numpy
+
 from elements import neural_network
-from elements.activation_functions import unipolar_sigmoid
+
+
+class Stats(object):
+    def __init__(self):
+        self.reset()
+
+    def reset(self):
+        self._right = 0
+        self._wrong = 0
+        self._total = 0
+        self._right_dict = {}
+        self._wrong_dict = {}
+
+    @property
+    def right(self):
+        return self.right
+
+    def is_right(self, label):
+        self._total += 1
+        self._right += 1
+        self._right_dict.setdefault(label, 0)
+        self._right_dict[label] += 1
+
+    @property
+    def wrong(self):
+        return self._wrong
+
+    def is_wrong(self, label, output):
+        self._total += 1
+        self._wrong += 1
+        self._wrong_dict.setdefault(label, {}).setdefault(output, 0)
+        self._wrong_dict[label][output] += 1
+
+    @property
+    def p_right(self):
+        return float(self._right) / self._total * 100
+
+    @property
+    def p_wrong(self):
+        return float(self._wrong) / self._total * 100
+
+    def __str__(self):
+        return '(right={self._right}):' \
+               '(wrong={self._wrong}):' \
+               '(p_right={self.p_right:.2f}%)'.format(self=self)
+
+    def progress(self, total):
+        c_pro = float(self._total) / total * 100
+        r_pro = 100 - c_pro
+        return '\r|{0}{1}|{2}'.format('>' * int(c_pro / 10),
+                                      '-' * int(r_pro / 10), self)
 
 
 class Learner(object):
-    def __init__(self, dimensions, labels, activation_function):
-        """
-        Create a learner
-
-        :param dimensions: the dimensions of the neural network. E.g. for input
-        (1,2,3,2) -> there is a single feature, the first hidden layer outputs
-        to 2 neurons, and the second hidden layer has outputs to 3 neurons.
-        While the labels have only 2 categories.
-                        ->  h_3,1
-                 h_2,1  ->          ->  l_1
-        x_1 ->          ->  h_3,2   ->
-                 h_2,2  ->          ->  l_2
-                        ->  h_3,3
-
-        :param activation_function: the activation function of each neuron
-        :param labels: number of labels
-        """
-        self._dimensions = dimensions
-        self._act_function = activation_function
+    def __init__(self, features_d, labels, step=0.003, hidden_d=()):
+        """Create a learner"""
+        self._dimensions = (features_d, ) + hidden_d + (len(labels),)
         self._labels = {l: i for i, l in enumerate(labels)}
-        self._layers = self._create_layers()
-        self._neural_network = neural_network.NeuralNetwork(self._layers)
+        self._step = step
+        self._neural_network = neural_network.NeuralNetwork(
+            self._dimensions, self._step)
 
-    def process_batch(self, features_matrix, labels, batch_size=1):
-        for row in features_matrix:
-            self.process(row, labels)
+        self._stats = None
 
-    def _translate_label(self, label):
-        vector_label = [0] * self._dimensions[-1]
-        vector_label[self._labels[label]] = 1
-        return tensor.Tensor(vector_label)
+    @property
+    @contextmanager
+    def stats(self):
+        self._stats = Stats()
+        yield self._stats
 
-    def process(self, features, label):
+    def learn(self, features, label):
+        features = self._neural_network.vectorize(features.flatten())
+        output_vector = self._neural_network.process(features, True)
+        self._neural_network.update_layers(self._label_to_tensor(label), features)
+        self._keep_track(output_vector, label)
+
+    def test(self, features, label):
+        features = self._neural_network.vectorize(features.flatten())
+        output_vector = self._neural_network.process(features, False)
+        self._keep_track(output_vector, label)
+
+    def _keep_track(self, output_vector, label):
+        if self._stats:
+            if output_vector.argmax() == label:
+                self._stats.is_right(label)
+            else:
+                self._stats.is_wrong(label, output_vector.argmax())
+
+    def _process(self, features, learning=True):
         """
 
         :param features: the features to flow through the neural network.
         :param label: passing labels means we are in training mode.
+        :param testing: whether we are in learning or testing mode. in testing
+        mode, no changes will be made to the neural network
         :return:
         """
-        output_vector = self._neural_network.process(features)
-        self._neural_network.propagate_deltas(self._translate_label(label))
-        self._neural_network.update_layers()
-        return output_vector
+        return
 
-    def _create_layers(self):
-        return [
-            layer.Layer(
-                self._dimensions[d],
-                self._dimensions[d+1],
-                act_func=self._act_function
-            )
-            for d, _ in enumerate(self._dimensions[:-1])
-        ]
+    def _label_to_tensor(self, label):
+        vector_label = numpy.zeros((len(self._labels)))
+        vector_label[self._labels[label]] = 1.
+        return self._neural_network.vectorize(vector_label)
 
     def __str__(self):
         return str(self._neural_network)
-
-
-if __name__ == '__main__':
-    l = Learner((2, 4, 10, 2, 25, 3, 2), ['dog', 'cat'], unipolar_sigmoid)
-    f = features.Features([2, 3])
-    print f
-    print
-    print l
-
-    print
-
-    res = l.process(f, 'dog')
-
-
-    print res
-
-    print '~' *20
-    print l
