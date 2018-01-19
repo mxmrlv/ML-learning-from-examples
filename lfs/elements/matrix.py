@@ -3,20 +3,16 @@
 class Matrix(object):
 
     def __init__(self, ndarray, *args, **kwargs):
-        self._matrix = ndarray
+        self.matrix = ndarray
 
     def __str__(self):
-        return str(self._matrix)
+        return str(self.matrix)
 
     def __getitem__(self, item):
-        return self._matrix[item]
+        return self.matrix[item]
 
     def __setitem__(self, key, value):
-        self._matrix[key] = value
-
-    @property
-    def matrix(self):
-        return self._matrix
+        self.matrix[key] = value
 
 
 class Vector(Matrix):
@@ -26,7 +22,7 @@ class Vector(Matrix):
 
     @property
     def vector(self):
-        return self._matrix
+        return self.matrix
 
     def argmax(self):
         return self.vector.argmax()

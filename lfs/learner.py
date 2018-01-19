@@ -38,16 +38,17 @@ class Stats(object):
 
     @property
     def p_right(self):
-        return float(self._right) / self._total * 100
+        return float(self._right) / self._total
 
     @property
     def p_wrong(self):
-        return float(self._wrong) / self._total * 100
+        return float(self._wrong) / self._total
 
     def __str__(self):
+        p_right = self.p_right * 100
         return '(right={self._right}):' \
                '(wrong={self._wrong}):' \
-               '(p_right={self.p_right:.2f}%)'.format(self=self)
+               '(p_right={p_right:.2f}%)'.format(self=self, p_right=p_right)
 
     def progress(self, total):
         c_pro = float(self._total) / total * 100
@@ -74,7 +75,7 @@ class Learner(object):
         yield self._stats
 
     def learn(self, features, label):
-        features = self._neural_network.vectorize(features.flatten())
+        features = self._neural_network.vectorize(features)
         output_vector = self._neural_network.process(features, True)
         self._neural_network.update_layers(self._label_to_tensor(label), features)
         self._keep_track(output_vector, label)

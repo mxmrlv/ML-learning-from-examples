@@ -33,7 +33,6 @@ class Layer(matrix.Matrix):
     def update_deltas(self, label=None, next_layer=None):
         if label:
             assert next_layer is None
-            # j = i + 1; delta_j = -lambda * o_j * (1 - o_j) * (d_j - o_j)
             deltas = (
                     # The derivative of the actual distance from the label.
                     -(label.vector - self.outputs.vector) *
@@ -45,7 +44,6 @@ class Layer(matrix.Matrix):
             )
         else:
             assert next_layer is not None
-            # j = i + 1; delta_i = lambda * o_i * (1 - o_i) * (W_[:, i] * delta_j)
             deltas = numpy.array([
                 self._lambda *
                 self.outputs.vector[i] *
@@ -57,14 +55,6 @@ class Layer(matrix.Matrix):
 
         self._deltas = matrix.Vector(deltas)
         return self
-
-    @property
-    def matrix(self):
-        return self._matrix
-
-    @matrix.setter
-    def matrix(self, new_matrix):
-        self._matrix = new_matrix
 
     @property
     def outputs(self):
