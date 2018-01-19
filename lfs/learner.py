@@ -60,12 +60,12 @@ class Stats(object):
 class Learner(object):
     def __init__(self, features_d, labels, step=0.003, hidden_d=()):
         """Create a learner"""
-        self._dimensions = (features_d, ) + hidden_d + (len(labels),)
+        # Adding one to the first matrix in order to handle biases.
+        self._dimensions = (features_d + 1, ) + hidden_d + (len(labels),)
         self._labels = {l: i for i, l in enumerate(labels)}
         self._step = step
         self._neural_network = neural_network.NeuralNetwork(
             self._dimensions, self._step)
-
         self._stats = None
 
     @property
@@ -75,7 +75,11 @@ class Learner(object):
         yield self._stats
 
     def learn(self, features, label):
+        # adding bias to features
+        features = numpy.concatenate((numpy.ones((1,)), features), 0)
+
         features = self._neural_network.vectorize(features)
+
         output_vector = self._neural_network.process(features, True)
         self._neural_network.update_layers(self._label_to_tensor(label), features)
         self._keep_track(output_vector, label)
@@ -91,17 +95,6 @@ class Learner(object):
                 self._stats.is_right(label)
             else:
                 self._stats.is_wrong(label, output_vector.argmax())
-
-    def _process(self, features, learning=True):
-        """
-
-        :param features: the features to flow through the neural network.
-        :param label: passing labels means we are in training mode.
-        :param testing: whether we are in learning or testing mode. in testing
-        mode, no changes will be made to the neural network
-        :return:
-        """
-        return
 
     def _label_to_tensor(self, label):
         vector_label = numpy.zeros((len(self._labels)))

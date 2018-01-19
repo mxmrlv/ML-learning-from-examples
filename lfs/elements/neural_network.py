@@ -37,11 +37,8 @@ class NeuralNetwork(object):
         return reduce(_update, self._layers, features_vector.vector)
 
     @staticmethod
-    def _create_layers(dimensions):
-        return [
-            layer.Layer(*dimensions[d:d+2])
-            for d in xrange(len(dimensions[:-1]))
-        ]
+    def _create_layers(dim):
+        return [layer.Layer(*dim[d:d + 2]) for d in xrange(len(dim[:-1]))]
 
     def __str__(self):
         return ('\n\n'.join(str(l) for l in self._layers) +

@@ -8,7 +8,9 @@ from learner import Learner
 
 numpy.set_printoptions(precision=2)
 
-_PATH = '/home/maxim-pcu/uni/ML-learning-from-samples/samples/mnist'
+_PATH = os.path.normpath(
+    os.path.join(os.path.dirname(__file__), '../samples/mnist')
+)
 TRAIN_IMAGES = os.path.join(_PATH, 'train-images.idx3-ubyte')
 TRAIN_LABELS = os.path.join(_PATH, 'train-labels.idx1-ubyte')
 TEST_IMAGES = os.path.join(_PATH, 't10k-images.idx3-ubyte')
@@ -16,7 +18,6 @@ TEST_LABELS = os.path.join(_PATH, 't10k-labels.idx1-ubyte')
 
 
 def _process_features(features):
-    # features_matrix = numpy.array(numpy.array([1.]) + [f.flatten() for f in features])
     features_matrix = numpy.array([f.flatten() for f in features])
     return (features_matrix - features_matrix.mean()) / 255.
 
@@ -58,8 +59,8 @@ def _asses(learner):
 if __name__ == '__main__':
     l = Learner(features_d=28*28,
                 labels=range(0, 10),
-                step=0.03,
-                hidden_d=(10, ) * 2)
+                step=0.006,
+                hidden_d=(5, ) * 3)
     _train(l)
 
     print '~' * 20
