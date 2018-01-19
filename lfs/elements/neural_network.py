@@ -30,7 +30,7 @@ class NeuralNetwork(object):
 
     def _update_layers(self, features_vector):
         def _update(o1, l2):
-            l2.matrix -= (self._step *
+            l2.matrix += (self._step *
                           numpy.outer(l2.deltas.vector, o1)).transpose()
             return l2.outputs.vector
 

@@ -18,7 +18,7 @@ TEST_LABELS = os.path.join(_PATH, 't10k-labels.idx1-ubyte')
 def _process_features(features):
     # features_matrix = numpy.array(numpy.array([1.]) + [f.flatten() for f in features])
     features_matrix = numpy.array([f.flatten() for f in features])
-    return features_matrix / 255.
+    return (features_matrix - features_matrix.mean()) / 255.
 
 
 def _get_data(training=True):
@@ -58,8 +58,8 @@ def _asses(learner):
 if __name__ == '__main__':
     l = Learner(features_d=28*28,
                 labels=range(0, 10),
-                step=0.03)
-                # hidden_d=(100, 30))
+                step=0.03,
+                hidden_d=(10, ) * 2)
     _train(l)
 
     print '~' * 20
