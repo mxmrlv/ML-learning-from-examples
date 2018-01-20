@@ -5,6 +5,7 @@ from random import shuffle
 import mnist
 
 from learner import Learner
+from lfs.elements import functions
 
 numpy.set_printoptions(precision=2)
 
@@ -59,8 +60,9 @@ def _asses(learner):
 if __name__ == '__main__':
     l = Learner(features_d=28*28,
                 labels=range(0, 10),
-                step=0.006,
-                hidden_d=(5, ) * 3)
+                step=.03,
+                cost_func=functions.CrossEntropyCostFunction,
+                hidden_d=(10, ) * 3)
     _train(l)
 
     print '~' * 20

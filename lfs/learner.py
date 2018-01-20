@@ -2,7 +2,7 @@ from contextlib import contextmanager
 
 import numpy
 
-from elements import neural_network
+from elements import neural_network, functions
 
 
 class Stats(object):
@@ -58,14 +58,34 @@ class Stats(object):
 
 
 class Learner(object):
-    def __init__(self, features_d, labels, step=0.003, hidden_d=()):
-        """Create a learner"""
+    def __init__(
+            self,
+            features_d,
+            labels,
+            hidden_d=(),
+            act_func=functions.Sigmoid,
+            cost_func=functions.QuadraticCostFunction,
+            step=0.003,
+    ):
+        """
+        Create a learner for a problem.
+
+        :param features_d: the dimension of the features
+        :param labels: the available labels
+        :param hidden_d: number of hidden layers, and number of neurons pair
+        layer. e.g. (7, 4) is two hidden layers, with 7 neurons in the first
+        hidden layer and 4 in the second.
+        :param act_func: the activation function to use. Defaults to sigmoid.
+        :param cost_func: the cost function to use. Builtins are 'quad` for
+        quadratic, or 'cross' for cross-entropy.
+        :param step: the step size.
+        """
         # Adding one to the first matrix in order to handle biases.
         self._dimensions = (features_d + 1, ) + hidden_d + (len(labels),)
         self._labels = {l: i for i, l in enumerate(labels)}
         self._step = step
         self._neural_network = neural_network.NeuralNetwork(
-            self._dimensions, self._step)
+            self._dimensions, self._step, act_func, cost_func)
         self._stats = None
 
     @property
@@ -81,10 +101,13 @@ class Learner(object):
         features = self._neural_network.vectorize(features)
 
         output_vector = self._neural_network.process(features, True)
-        self._neural_network.update_layers(self._label_to_tensor(label), features)
+        self._neural_network.update_weights(
+            self._label_to_tensor(label), features)
         self._keep_track(output_vector, label)
 
     def test(self, features, label):
+        features = numpy.concatenate((numpy.ones((1,)), features), 0)
+
         features = self._neural_network.vectorize(features.flatten())
         output_vector = self._neural_network.process(features, False)
         self._keep_track(output_vector, label)

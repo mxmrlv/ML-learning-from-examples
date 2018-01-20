@@ -1,49 +1,102 @@
 import numpy
 
-from . import layer, matrix
+from . import (
+    layer,
+    matrix,
+    functions
+)
 
 
 class NeuralNetwork(object):
-    def __init__(self, dimensions, step):
+    def __init__(
+        self,
+        dimensions,
+        step,
+        activation=functions.Sigmoid,
+        cost_func=functions.QuadraticCostFunction
+    ):
         self._layers = self._create_layers(dimensions)
         self._step = step
+        self._lambda = 1
+        self._activation = activation()
+        self._cost_func = cost_func()
 
     def process(self, features_vector, learning=True):
         return reduce(
-            lambda l1, l2: l2.dot(l1, learning),
+            lambda l1, l2: l2.dot(l1, self._act, learning=learning),
             self._layers,
             features_vector
         )
 
-    def update_layers(self, label, features_vector):
-        self._propagate_deltas(label)
+    def update_weights(self, label, features_vector):
+        self._update_deltas(label)
         self._update_layers(features_vector)
 
-    def _propagate_deltas(self, label):
-        # calculate the top layer deltas
-        self._layers[-1].update_deltas(label=label)
+    def _update_deltas(self, label):
+        # Update top layer deltas
+        self._layers[-1].deltas = self.vectorize(
+            -self._lambda *
+            # The cost function
+            self._cost_func(label, self._layers[-1]) *
+            # the derivative of the outcome itself
+            self._act_der(self._layers[-1].outputs)
+        )
 
-        # calculate the rest of the layers deltas
+        # Update hidden layer deltas
+        def _update(layer_, next_layer):
+            layer_.deltas = self.vectorize(
+                numpy.array([
+                    self._lambda *
+                    # The calculated error from weights
+                    next_layer.matrix[i].dot(next_layer.deltas.vector) *
+                    # The derivative of the activation function
+                    self._act_der(layer_.outputs.vector[i])
+
+                    for i in xrange(len(layer_.outputs.vector))
+                ])
+            )
+
+            return layer_
+
         if len(self._layers) > 1:
-            reduce(lambda n, c: c.update_deltas(next_layer=n),
-                   reversed(self._layers))
+            reduce(
+                lambda n, c: _update(layer_=c, next_layer=n),
+                reversed(self._layers)
+            )
 
     def _update_layers(self, features_vector):
-        def _update(o1, l2):
-            l2.matrix += (self._step *
-                          numpy.outer(l2.deltas.vector, o1)).transpose()
-            return l2.outputs.vector
 
-        return reduce(_update, self._layers, features_vector.vector)
+        def _update(o1, l2):
+            l2.matrix -= (self._step *
+                          numpy.outer(l2.deltas.vector, o1.vector)).transpose()
+
+            return l2.outputs
+
+        return reduce(_update, self._layers, features_vector)
+
+    @staticmethod
+    def _wrap_functions(x, func):
+        if isinstance(x, matrix.Vector):
+            return numpy.vectorize(func)(x.vector)
+        if isinstance(x, numpy.ndarray):
+            return numpy.vectorize(func)(x)
+
+        return func(x)
+
+    def _act(self, x):
+        return self._wrap_functions(x, self._activation.call)
+
+    def _act_der(self, o):
+        return self._wrap_functions(o, self._activation.der_call)
 
     @staticmethod
     def _create_layers(dim):
         return [layer.Layer(*dim[d:d + 2]) for d in xrange(len(dim[:-1]))]
 
-    def __str__(self):
-        return ('\n\n'.join(str(l) for l in self._layers) +
-                '(step={self._step})'.format(self=self))
-
     @staticmethod
     def vectorize(ndarray):
         return matrix.Vector(ndarray)
+
+    def __str__(self):
+        return ('\n\n'.join(str(l) for l in self._layers) +
+                '(step={self._step})'.format(self=self))
