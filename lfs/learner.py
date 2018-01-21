@@ -1,63 +1,66 @@
+import numpy
 from contextlib import contextmanager
 
-import numpy
 
-from elements import neural_network, functions
+from .elements import neural_network, functions
 
 
-class Stats(object):
-    def __init__(self):
-        self.reset()
-
-    def reset(self):
-        self._right = 0
-        self._wrong = 0
-        self._total = 0
-        self._right_dict = {}
-        self._wrong_dict = {}
-
-    @property
-    def right(self):
-        return self.right
-
-    def is_right(self, label):
-        self._total += 1
-        self._right += 1
-        self._right_dict.setdefault(label, 0)
-        self._right_dict[label] += 1
-
-    @property
-    def wrong(self):
-        return self._wrong
-
-    def is_wrong(self, label, output):
-        self._total += 1
-        self._wrong += 1
-        self._wrong_dict.setdefault(label, {}).setdefault(output, 0)
-        self._wrong_dict[label][output] += 1
-
-    @property
-    def p_right(self):
-        return float(self._right) / self._total
-
-    @property
-    def p_wrong(self):
-        return float(self._wrong) / self._total
-
-    def __str__(self):
-        p_right = self.p_right * 100
-        return '(right={self._right}):' \
-               '(wrong={self._wrong}):' \
-               '(p_right={p_right:.2f}%)'.format(self=self, p_right=p_right)
-
-    def progress(self, total):
-        c_pro = float(self._total) / total * 100
-        r_pro = 100 - c_pro
-        return '\r|{0}{1}|{2}'.format('>' * int(c_pro / 10),
-                                      '-' * int(r_pro / 10), self)
+numpy.set_printoptions(precision=2)
 
 
 class Learner(object):
+
+    class Stats(object):
+        def __init__(self):
+            self.reset()
+
+        def reset(self):
+            self._right = 0
+            self._wrong = 0
+            self._total = 0
+            self._right_dict = {}
+            self._wrong_dict = {}
+
+        @property
+        def right(self):
+            return self.right
+
+        def is_right(self, label):
+            self._total += 1
+            self._right += 1
+            self._right_dict.setdefault(label, 0)
+            self._right_dict[label] += 1
+
+        @property
+        def wrong(self):
+            return self._wrong
+
+        def is_wrong(self, label, output):
+            self._total += 1
+            self._wrong += 1
+            self._wrong_dict.setdefault(label, {}).setdefault(output, 0)
+            self._wrong_dict[label][output] += 1
+
+        @property
+        def p_right(self):
+            return float(self._right) / self._total
+
+        @property
+        def p_wrong(self):
+            return float(self._wrong) / self._total
+
+        def __str__(self):
+            p_right = self.p_right * 100
+            return '(right={self._right}):' \
+                   '(wrong={self._wrong}):' \
+                   '(p_right={p_right:.2f}%)'.format(self=self, p_right=p_right)
+
+        def progress(self, total):
+            c_pro = float(self._total) / total * 100
+            r_pro = 100 - c_pro
+            return '\r|{0}{1}|{2}'.format('>' * int(c_pro / 10),
+                                          '-' * int(r_pro / 10), self)
+
     def __init__(
             self,
             features_d,
@@ -91,7 +94,7 @@ class Learner(object):
     @property
     @contextmanager
     def stats(self):
-        self._stats = Stats()
+        self._stats = self.Stats()
         yield self._stats
 
     def learn(self, features, label):
