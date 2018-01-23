@@ -16,15 +16,15 @@ TEST_BATCH = os.path.join(_PATH, 'test_batch')
 
 
 class CIFAR10TTrainer(TrainerBase):
-    def __init__(self, learner=None, *args, **kwargs):
+    def __init__(self, trainee=None, *args, **kwargs):
         features_size = 3072
-        if learner:
-            assert learner._dimensions[0] == features_size + 1
-            assert len(learner._labels) == 10
+        if trainee:
+            assert trainee._dimensions[0] == features_size + 1
+            assert len(trainee._labels) == 10
         else:
-            learner = Trainee(
+            trainee = Trainee(
                 features_size, range(0, 10), step=.03 , hidden_d=(20, 15, 10))
-        super(CIFAR10TTrainer, self).__init__(learner, *args, **kwargs)
+        super(CIFAR10TTrainer, self).__init__(trainee, *args, **kwargs)
         self._training_sets = self._get_training_data()
         self._test_sets = self._get_test_data()
 

@@ -16,17 +16,21 @@ TEST_LABELS = os.path.join(_PATH, 't10k-labels.idx1-ubyte')
 
 
 class MNISTTrainer(TrainerBase):
-    def __init__(self, learner=None, *args, **kwargs):
+    def __init__(self, trainee=None, *args, **kwargs):
         features_size = 28**2
 
-        if learner:
-            assert learner._dimensions[0] == features_size + 1
-            assert len(learner._labels) == 10
+        if trainee:
+            assert trainee._dimensions[0] == features_size + 1
+            assert len(trainee._labels) == 10
         else:
-            learner = Trainee(
-                features_size, range(0, 10), step=.03, hidden_d=(20, 15, 10))
+            trainee = Trainee(
+                features_size, range(0, 10),
+                lambda_factor=.85,
+                step=.03,
+                hidden_d=(10, 10)
+            )
 
-        super(MNISTTrainer, self).__init__(learner, *args, **kwargs)
+        super(MNISTTrainer, self).__init__(trainee, *args, **kwargs)
         print 'Getting Training set...'
         self._training_sets = self._get_data()
         print 'Getting Test set...'

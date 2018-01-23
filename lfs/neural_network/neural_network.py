@@ -12,12 +12,13 @@ class NeuralNetwork(object):
         self,
         dimensions,
         step,
+        lambda_factor=.95,
         activation=functions.Sigmoid,
         cost_func=functions.QuadraticCostFunction
     ):
         self._layers = self._create_layers(dimensions)
         self._step = step
-        self._lambda = 1
+        self._lambda = lambda_factor
         self._activation = activation()
         self._cost_func = cost_func()
 

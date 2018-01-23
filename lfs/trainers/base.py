@@ -2,8 +2,8 @@ from random import shuffle
 
 
 class TrainerBase(object):
-    def __init__(self, learner):
-        self._learner = learner
+    def __init__(self, trainee):
+        self._trainee = trainee
 
     @property
     def training_sets(self):
@@ -17,11 +17,11 @@ class TrainerBase(object):
         epochs = 0
         current_p_right = 0
         while p_right > current_p_right:
-            with self._learner.stats as stats:
+            with self._trainee.stats as stats:
                 epochs += 1
                 shuffle(self.training_sets)
                 for features_sets, label_sets in self.training_sets:
-                    self._learner.train(features_sets, label_sets)
+                    self._trainee.train(features_sets, label_sets)
                     print stats.progress(len(self.training_sets)),
                 print 'Epoch: {0}'.format(epochs)
 
@@ -30,9 +30,9 @@ class TrainerBase(object):
             print 'Success rate is at: {0:.2f}%'.format(current_p_right * 100)
 
     def test(self, print_state=True):
-        with self._learner.stats as stats:
+        with self._trainee.stats as stats:
             for (features, label) in self.test_sets:
-                self._learner.test(features, label)
+                self._trainee.test(features, label)
                 if print_state:
                     print stats.progress(len(self.test_sets)),
             return stats

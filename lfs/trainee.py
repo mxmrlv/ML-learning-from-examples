@@ -64,13 +64,14 @@ class Trainee(object):
             self,
             features_d,
             labels,
+            lambda_factor=.95,
             hidden_d=(),
             act_func=functions.Sigmoid,
             cost_func=functions.QuadraticCostFunction,
-            step=0.003,
+            step=.03,
     ):
         """
-        Create a learner for a problem.
+        Create a trainee for a problem.
 
         :param features_d: the dimension of the features
         :param labels: the available labels
@@ -88,7 +89,7 @@ class Trainee(object):
         self._index_to_label = {i: l for i, l in enumerate(labels)}
         self._step = step
         self._neural_network = NeuralNetwork(
-            self._dimensions, self._step, act_func, cost_func)
+            self._dimensions, self._step, lambda_factor, act_func, cost_func)
         self._stats = None
 
     @property
@@ -103,7 +104,7 @@ class Trainee(object):
 
     def train(self, features, label):
         """
-        Train the learner according to the feautres and the label.
+        Train the trainee according to the features and the label.
         :param features:
         :param label:
         :return: None
