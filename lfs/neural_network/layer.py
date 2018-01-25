@@ -1,7 +1,7 @@
 
 
 """
-Tensor wrapper with extended capabilities - such as outputs and deltas.
+Matrix wrapper with extended capabilities - such as outputs and deltas.
 """
 
 import numpy
@@ -18,10 +18,10 @@ class Layer(matrix.Matrix):
         self.deltas = None
 
     def dot(self, other, act_func, learning=True):
-        res = self.matrix.transpose().dot(other.vector)
-        outputs = matrix.Vector(numpy.array([act_func(o) for o in res]))
+        res = self.T.dot(other).T
+        outputs = matrix.Matrix(numpy.array([act_func(o) for o in res]))
         self.outputs = outputs if learning else self.outputs
-        return outputs
+        return outputs.T
 
     def __str__(self):
         return (

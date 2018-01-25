@@ -26,7 +26,7 @@ class NeuralNetwork(object):
         return reduce(
             lambda l1, l2: l2.dot(l1, self._act, learning=learning),
             self._layers,
-            features_vector
+            features_vector.T
         )
 
     def update_weights(self, label, features_vector):
@@ -35,26 +35,20 @@ class NeuralNetwork(object):
 
     def _update_deltas(self, label):
         # Update top layer deltas
-        self._layers[-1].deltas = self.vectorize(
-            -self._lambda *
+        self._layers[-1].deltas = matrix.Matrix(
+            (-self._lambda *
             # The cost function
             self._cost_func(label, self._layers[-1]) *
             # the derivative of the outcome itself
-            self._act_der(self._layers[-1].outputs)
+            self._act_der(self._layers[-1].outputs)).T
         )
 
         # Update hidden layer deltas
         def _update(layer_, next_layer):
-            layer_.deltas = self.vectorize(
-                numpy.array([
-                    self._lambda *
-                    # The calculated error from weights
-                    next_layer.matrix[i].dot(next_layer.deltas.vector) *
-                    # The derivative of the activation function
-                    self._act_der(layer_.outputs.vector[i])
-
-                    for i in xrange(len(layer_.outputs.vector))
-                ])
+            layer_.deltas = matrix.Matrix(
+                self._lambda *
+                next_layer.matrix.dot(next_layer.deltas) *
+                self._act_der(layer_.outputs.T)
             )
 
             return layer_
@@ -68,8 +62,10 @@ class NeuralNetwork(object):
     def _update_layers(self, features_vector):
 
         def _update(o1, l2):
-            l2.matrix -= (self._step *
-                          numpy.outer(l2.deltas.vector, o1.vector)).transpose()
+            l2.matrix -= (
+                self._step *
+                numpy.outer(o1.sum(axis=0), l2.deltas.sum(axis=1))
+            )
 
             return l2.outputs
 
@@ -77,11 +73,8 @@ class NeuralNetwork(object):
 
     @staticmethod
     def _wrap_functions(x, func):
-        if isinstance(x, matrix.Vector):
-            return numpy.vectorize(func)(x.vector)
-        if isinstance(x, numpy.ndarray):
+        if isinstance(x, (matrix.Matrix, numpy.ndarray)):
             return numpy.vectorize(func)(x)
-
         return func(x)
 
     def _act(self, x):
@@ -96,7 +89,7 @@ class NeuralNetwork(object):
 
     @staticmethod
     def vectorize(ndarray):
-        return matrix.Vector(ndarray)
+        return matrix.Matrix(ndarray)
 
     def __str__(self):
         return ('\n\n'.join(str(l) for l in self._layers) +

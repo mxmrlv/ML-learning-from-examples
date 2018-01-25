@@ -21,7 +21,7 @@ class MNISTTrainer(TrainerBase):
 
         if trainee:
             assert trainee._dimensions[0] == features_size + 1
-            assert len(trainee._labels) == 10
+            assert len(trainee._label_to_index) == 10
         else:
             trainee = Trainee(
                 features_size, range(0, 10),
