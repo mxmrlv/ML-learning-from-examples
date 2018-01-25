@@ -18,10 +18,10 @@ class Layer(matrix.Matrix):
         self.deltas = None
 
     def dot(self, other, act_func, learning=True):
-        res = self.matrix.transpose().dot(other).transpose()
+        res = self.T.dot(other).T
         outputs = matrix.Matrix(numpy.array([act_func(o) for o in res]))
         self.outputs = outputs if learning else self.outputs
-        return outputs.matrix.transpose()
+        return outputs.T
 
     def __str__(self):
         return (

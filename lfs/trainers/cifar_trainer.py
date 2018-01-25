@@ -23,7 +23,11 @@ class CIFAR10TTrainer(TrainerBase):
             assert len(trainee._labels) == 10
         else:
             trainee = Trainee(
-                features_size, range(0, 10), step=.03 , hidden_d=(20, 15, 10))
+                features_size, range(0, 10),
+                lambda_factor=.95,
+                step=.03,
+                hidden_d=(20, 15, 10)
+            )
         super(CIFAR10TTrainer, self).__init__(trainee, *args, **kwargs)
         self._training_sets = self._get_training_data()
         self._test_sets = self._get_test_data()
