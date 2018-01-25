@@ -14,48 +14,26 @@ class Trainee(object):
             self.reset()
 
         def reset(self):
-            self._right = 0
-            self._wrong = 0
-            self._total = 0
-            self._right_dict = {}
-            self._wrong_dict = {}
-
-        @property
-        def right(self):
-            return self.right
-
-        def is_right(self, label):
-            self._total += 1
-            self._right += 1
-            self._right_dict.setdefault(label, 0)
-            self._right_dict[label] += 1
-
-        @property
-        def wrong(self):
-            return self._wrong
-
-        def is_wrong(self, label, output):
-            self._total += 1
-            self._wrong += 1
-            self._wrong_dict.setdefault(label, {}).setdefault(output, 0)
-            self._wrong_dict[label][output] += 1
+            self.right = 0
+            self.wrong = 0
+            self.total = 0
 
         @property
         def p_right(self):
-            return float(self._right) / self._total
+            return (float(self.right) / self.total) if self.total != 0 else 0
 
         @property
         def p_wrong(self):
-            return float(self._wrong) / self._total
+            return (float(self.wrong) / self.total) if self.total != 0 else 0
 
         def __str__(self):
             p_right = self.p_right * 100
-            return '(right={self._right}):' \
-                   '(wrong={self._wrong}):' \
+            return '(right={self.right}):' \
+                   '(wrong={self.wrong}):' \
                    '(p_right={p_right:.2f}%)'.format(self=self, p_right=p_right)
 
         def progress(self, total):
-            c_pro = float(self._total) / total * 100
+            c_pro = float(self.total) / total * 100
             r_pro = 100 - c_pro
             return '\r|{0}{1}|{2}'.format('>' * int(c_pro / 10),
                                           '-' * int(r_pro / 10), self)
@@ -110,13 +88,14 @@ class Trainee(object):
         :return: None
         """
         # adding bias to features
-        features = numpy.concatenate((numpy.ones((1,)), features), 0)
+        features = numpy.array([numpy.append([1.], features[i])
+                                for i in xrange(len(features))])
 
         features = self._neural_network.vectorize(features)
 
         output_vector = self._neural_network.process(features, True)
         self._neural_network.update_weights(
-            self._label_to_tensor(label), features)
+            self._labels_to_vectors(label), features)
         self._keep_track(output_vector, label)
 
     def test(self, features, label=None):
@@ -133,19 +112,30 @@ class Trainee(object):
         output_vector = self._neural_network.process(features, False)
         if label:
             self._keep_track(output_vector, label)
-        return self._index_to_label[output_vector.vector.argmax()]
+        return self._index_to_label[output_vector.argmax()]
 
-    def _keep_track(self, output_vector, label):
+    def _keep_track(self, output_vector, labels):
         if self._stats:
-            if output_vector.argmax() == label:
-                self._stats.is_right(label)
+            if len(output_vector.shape) > 1:
+                right = numpy.sum(output_vector.argmax(axis=0) == labels)
             else:
-                self._stats.is_wrong(label, output_vector.argmax())
+                right = numpy.sum(output_vector.argmax() == labels)
 
-    def _label_to_tensor(self, label):
-        vector_label = numpy.zeros((len(self._label_to_index)))
-        vector_label[self._label_to_index[label]] = 1.
-        return self._neural_network.vectorize(vector_label)
+            n_labels = len(labels) if isinstance(labels, numpy.ndarray) else 1
+            self._stats.total += n_labels
+            self._stats.right += right
+            self._stats.wrong += n_labels - right
+
+    def _labels_to_vectors(self, labels):
+        if not isinstance(labels, numpy.ndarray):
+            labels = [labels]
+
+        vector_labels = [None] * len(labels)
+        for i, label in enumerate(labels):
+            vector_labels[i] = numpy.zeros((len(self._label_to_index)))
+            vector_labels[i][self._label_to_index[label]] = 1.
+
+        return self._neural_network.vectorize(vector_labels)
 
     def __str__(self):
         return str(self._neural_network)

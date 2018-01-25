@@ -16,12 +16,12 @@ TEST_LABELS = os.path.join(_PATH, 't10k-labels.idx1-ubyte')
 
 
 class MNISTTrainer(TrainerBase):
-    def __init__(self, trainee=None, *args, **kwargs):
+    def __init__(self, trainee=None, batch_size=1, *args, **kwargs):
         features_size = 28**2
 
         if trainee:
             assert trainee._dimensions[0] == features_size + 1
-            assert len(trainee._labels) == 10
+            assert len(trainee._label_to_index) == 10
         else:
             trainee = Trainee(
                 features_size, range(0, 10),
@@ -30,7 +30,7 @@ class MNISTTrainer(TrainerBase):
                 hidden_d=(10, 10)
             )
 
-        super(MNISTTrainer, self).__init__(trainee, *args, **kwargs)
+        super(MNISTTrainer, self).__init__(trainee, batch_size, *args, **kwargs)
         print 'Getting Training set...'
         self._training_sets = self._get_data()
         print 'Getting Test set...'
